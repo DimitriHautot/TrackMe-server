@@ -1,6 +1,7 @@
 package net.trackme.server.verticle;
 
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.ext.web.Router;
@@ -23,11 +24,15 @@ public class ServerVerticle extends AbstractVerticle {
         super.start();
         HttpServer server = vertx.createHttpServer();
         Router router = Router.router(vertx);
+        EventBus eventBus = vertx.eventBus();
 
         router.route(HttpMethod.GET, "/trip/:tripId").handler(routingContext -> {
             String tripId = routingContext.request().getParam("tripId");
-            // TODO Load from persistence
-            // TODO return result as body, or 404
+            eventBus.send(PersistenceVerticle.READ, tripId, asyncResult -> {
+               if (asyncResult.succeeded()) {
+                    // TODO return result as body, or 404
+               }
+            });
         });
 
         server.requestHandler(router::accept).listen(serverPort);
