@@ -19,20 +19,25 @@ public class PersistenceVerticle extends AbstractVerticle {
 
     private MongoClient mongo;
 
-    public PersistenceVerticle() {
-        super();
-        JsonObject configuration = new JsonObject(); // FIXME Provide real values
-        mongo = MongoClient.createShared(vertx, configuration);
-    }
-
     @Override
     public void start() {
-        EventBus eventBus = vertx.eventBus();
+        // FIXME Externalize this
+        JsonObject configuration = new JsonObject()
+                .put("host", "localhost")
+                .put("port", 27017)
+                .put("db_name", "track-me");
+        mongo = MongoClient.createShared(vertx, configuration);
 
+        EventBus eventBus = vertx.eventBus();
         eventBus.consumer("persistence.trip.create", this::create);
         eventBus.consumer("persistence.trip.update", this::update);
         eventBus.consumer("persistence.trip.delete", this::delete);
         eventBus.consumer("persistence.trip.read", this::read);
+    }
+
+    @Override
+    public void stop() {
+        mongo.close();
     }
 
     private void create(Message<Trip> message) {
