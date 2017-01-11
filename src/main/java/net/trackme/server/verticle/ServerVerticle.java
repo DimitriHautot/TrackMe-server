@@ -4,6 +4,8 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
+import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.json.Json;
 import io.vertx.ext.web.Router;
 
 /**
@@ -30,7 +32,15 @@ public class ServerVerticle extends AbstractVerticle {
             String tripId = routingContext.request().getParam("tripId");
             eventBus.send(PersistenceVerticle.READ, tripId, asyncResult -> {
                if (asyncResult.succeeded()) {
-                    // TODO return result as body, or 404
+                   HttpServerResponse response = routingContext.response();
+                   if (asyncResult.result().body() != null) {
+                       response.putHeader("content-type", "application/json; charset=utf-8");
+                       response.setStatusCode(200);
+                       response.end(Json.encodePrettily(asyncResult.result()));
+                   } else {
+                       response.setStatusCode(404);
+                       response.end();
+                   }
                }
             });
         });
