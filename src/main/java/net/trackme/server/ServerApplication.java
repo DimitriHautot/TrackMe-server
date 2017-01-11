@@ -1,4 +1,4 @@
-package net.trackme;
+package net.trackme.server;
 
 import io.vertx.core.Vertx;
 import net.trackme.server.verticle.PersistenceVerticle;
