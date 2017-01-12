@@ -3,18 +3,18 @@ package net.trackme.server.verticle;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.mongo.MongoClient;
-import net.trackme.server.verticle.domain.Trip;
+import net.trackme.server.domain.Trip;
 
 /**
  * @author Dimitri (10/01/2017)
  */
-public class PersistenceVerticle extends AbstractVerticle {
+public class Persistence extends AbstractVerticle {
 
-    public static final String CREATE = "persistence.trip.create";
+    public static final String SAVE = "persistence.trip.save";
     public static final String READ   = "persistence.trip.read";
-    public static final String UPDATE = "persistence.trip.update";
     public static final String DELETE = "persistence.trip.delete";
 
     private MongoClient mongo;
@@ -29,10 +29,9 @@ public class PersistenceVerticle extends AbstractVerticle {
         mongo = MongoClient.createShared(vertx, configuration);
 
         EventBus eventBus = vertx.eventBus();
-        eventBus.consumer("persistence.trip.create", this::create);
-        eventBus.consumer("persistence.trip.update", this::update);
-        eventBus.consumer("persistence.trip.delete", this::delete);
-        eventBus.consumer("persistence.trip.read", this::read);
+        eventBus.consumer(SAVE, this::save);
+        eventBus.consumer(READ, this::read);
+        eventBus.consumer(DELETE, this::delete);
     }
 
     @Override
@@ -40,10 +39,17 @@ public class PersistenceVerticle extends AbstractVerticle {
         mongo.close();
     }
 
-    private void create(Message<Trip> message) {
-    }
-
-    private void update(Message<Trip> message) {
+    private void save(Message<JsonObject> message) {
+        boolean insert = message.body().getString("_id") == null;
+        mongo.save("trips", message.body(), asyncResult -> {
+            if (asyncResult.succeeded()) {
+                if (insert) {
+                    message.reply(message.body().put("_id", asyncResult.result()));
+                } else {
+                    message.reply(asyncResult.result());
+                }
+            }
+        });
     }
 
     private void delete(Message<Trip> message) {
