@@ -13,5 +13,8 @@ import java.util.List;
 public class Trip {
 
     private String _id;
+    private String description; // e.g. Trip to Bordeaux
+    private Status status; // Paused
+    private String statusRemark; // Pee
     private List<GeoLocation> geoLocations;
 }
