@@ -1,14 +1,14 @@
 package net.trackme.server.verticle;
 
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
-import net.trackme.server.domain.Trip;
+import io.vertx.ext.web.handler.CorsHandler;
 
 /**
  * Verticle dedicated to the trip management.
@@ -29,6 +29,15 @@ public class ServerVerticle extends AbstractVerticle {
         HttpServer server = vertx.createHttpServer();
         Router router = Router.router(vertx);
         router.route("/api/trip*").handler(BodyHandler.create());
+        router.route().handler(CorsHandler.create("http://localhost:8100")
+                .allowedMethod(HttpMethod.GET)
+                .allowedMethod(HttpMethod.POST)
+                .allowedMethod(HttpMethod.OPTIONS)
+                .allowedHeader("Access-Control-Allow-Method")
+                .allowedHeader("Access-Control-Allow-Headers")
+                .allowedHeader("Access-Control-Allow-Origin")
+                .allowedHeader("Content-Type")
+        );
         router.post("/api/trip").handler(this::save);
         router.get("/api/trip/:tripId").handler(this::read);
         server.requestHandler(router::accept).listen(serverPort);
