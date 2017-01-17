@@ -12,4 +12,5 @@ public class GeoLocation {
 
     private long timestamp;
     private double latitude, longitude;
+    private String comment;
 }

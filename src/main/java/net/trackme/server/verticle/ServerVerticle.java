@@ -5,10 +5,13 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
+import net.trackme.server.domain.Trip;
+import net.trackme.server.domain.UpdateCommand;
 
 /**
  * Verticle dedicated to the trip management.
@@ -29,7 +32,7 @@ public class ServerVerticle extends AbstractVerticle {
         HttpServer server = vertx.createHttpServer();
         Router router = Router.router(vertx);
         router.route("/api/trip*").handler(BodyHandler.create());
-        router.route().handler(CorsHandler.create("http://localhost:8100")
+        router.route().handler(CorsHandler.create("*")
                 .allowedMethod(HttpMethod.GET)
                 .allowedMethod(HttpMethod.POST)
                 .allowedMethod(HttpMethod.OPTIONS)
@@ -38,7 +41,8 @@ public class ServerVerticle extends AbstractVerticle {
                 .allowedHeader("Access-Control-Allow-Origin")
                 .allowedHeader("Content-Type")
         );
-        router.post("/api/trip").handler(this::save);
+        router.post("/api/trip").handler(this::create);
+        router.put("/api/trip/:tripId").handler(this::update);
         router.get("/api/trip/:tripId").handler(this::read);
         server.requestHandler(router::accept).listen(serverPort);
     }
@@ -61,16 +65,35 @@ public class ServerVerticle extends AbstractVerticle {
         });
     }
 
-    private void save(RoutingContext routingContext) {
-        vertx.eventBus().send(Persistence.SAVE, routingContext.getBodyAsJson(), asyncResult -> {
+    private void create(RoutingContext routingContext) {
+        vertx.eventBus().send(Persistence.CREATE, routingContext.getBodyAsJson(), asyncResult -> {
             if (asyncResult.succeeded()) {
                 HttpServerResponse response = routingContext.response();
                 response.putHeader("content-type", "application/json; charset=utf-8");
                 if (asyncResult.result().body() != null) {
                     response.setStatusCode(201).end(Json.encodePrettily(asyncResult.result().body()));
-                } else {
-                    response.setStatusCode(204).end();
                 }
+            } else {
+                routingContext.response().setStatusCode(500).end();
+            }
+        });
+    }
+
+    private void update(RoutingContext routingContext) {
+        String tripId = routingContext.request().getParam("tripId");
+        String ownershipToken = routingContext.request().getHeader("Owner");
+
+        UpdateCommand command = UpdateCommand.builder()
+                .tripId(tripId)
+                .ownershipToken(ownershipToken)
+                .items(routingContext.getBodyAsJsonArray())
+                .build();
+
+        vertx.eventBus().send(TripVerticle.UPDATE, command, asyncResult -> {
+            if (asyncResult.succeeded()) {
+                HttpServerResponse response = routingContext.response();
+                response.putHeader("content-type", "application/json; charset=utf-8");
+                response.setStatusCode((Integer) asyncResult.result().body()).end();
             } else {
                 routingContext.response().setStatusCode(500).end();
             }

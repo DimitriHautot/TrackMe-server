@@ -13,7 +13,8 @@ import net.trackme.server.domain.Trip;
  */
 public class Persistence extends AbstractVerticle {
 
-    public static final String SAVE = "persistence.trip.save";
+    public static final String CREATE = "persistence.trip.create";
+    public static final String UPDATE = "persistence.trip.update";
     public static final String READ   = "persistence.trip.read";
     public static final String DELETE = "persistence.trip.delete";
 
@@ -29,7 +30,8 @@ public class Persistence extends AbstractVerticle {
         mongo = MongoClient.createShared(vertx, configuration);
 
         EventBus eventBus = vertx.eventBus();
-        eventBus.consumer(SAVE, this::save);
+        eventBus.consumer(CREATE, this::create);
+        eventBus.consumer(UPDATE, this::update);
         eventBus.consumer(READ, this::read);
         eventBus.consumer(DELETE, this::delete);
     }
@@ -39,15 +41,18 @@ public class Persistence extends AbstractVerticle {
         mongo.close();
     }
 
-    private void save(Message<JsonObject> message) {
-        boolean insert = message.body().getString("_id") == null;
+    private void create(Message<JsonObject> message) {
         mongo.save("trips", message.body(), asyncResult -> {
             if (asyncResult.succeeded()) {
-                if (insert) {
-                    message.reply(message.body().put("_id", asyncResult.result()));
-                } else {
-                    message.reply(asyncResult.result());
-                }
+                message.reply(message.body().put("_id", asyncResult.result()));
+            }
+        });
+    }
+
+    private void update(Message<JsonObject> message) {
+        mongo.save("trips", message.body(), asyncResult -> {
+            if (asyncResult.succeeded()) {
+                message.reply(asyncResult.result());
             }
         });
     }
