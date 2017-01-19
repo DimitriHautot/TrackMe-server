@@ -18,4 +18,13 @@ public class Trip {
     private Status status; // Paused
     private String statusRemark; // Pee
     private List<GeoLocation> geoLocations;
+
+    public Trip(String _id, String ownershipToken, String description, Status status, String statusRemark, List<GeoLocation> geoLocations) {
+        this._id = _id;
+        this.ownershipToken = ownershipToken;
+        this.description = description;
+        this.status = status;
+        this.statusRemark = statusRemark;
+        this.geoLocations = geoLocations;
+    }
 }

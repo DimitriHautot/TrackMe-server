@@ -33,14 +33,15 @@ public class TripVerticle extends AbstractVerticle {
      *     <li>return success to caller</li>
      * </ol>
      */
-    private void update(Message<UpdateCommand> message) {
-        vertx.eventBus().send(Persistence.READ, message.body(), asyncResult -> {
+    private void update(Message<String> message) {
+        UpdateCommand command = Json.decodeValue(message.body(), UpdateCommand.class);
+        vertx.eventBus().send(Persistence.READ, command.getTripId(), asyncResult -> {
             if (asyncResult.succeeded()) {
                 Trip trip = Json.decodeValue(asyncResult.result().body().toString(), Trip.class);
-                if (!trip.getOwnershipToken().equals(message.body().getOwnershipToken())) {
+                if (!trip.getOwnershipToken().equals(command.getOwnershipToken())) {
                     message.reply(new JsonObject().put("code", 403));
                 }
-                apply(trip, message.body());
+                apply(trip, command);
                 persist(trip, message);
             }
         });

@@ -34,6 +34,7 @@ public class ServerVerticle extends AbstractVerticle {
         router.route().handler(CorsHandler.create("*")
                 .allowedMethod(HttpMethod.GET)
                 .allowedMethod(HttpMethod.POST)
+                .allowedMethod(HttpMethod.PUT)
                 .allowedMethod(HttpMethod.OPTIONS)
                 .allowedHeader("Access-Control-Allow-Method")
                 .allowedHeader("Access-Control-Allow-Headers")
@@ -87,10 +88,10 @@ public class ServerVerticle extends AbstractVerticle {
         UpdateCommand command = UpdateCommand.builder()
                 .tripId(tripId)
                 .ownershipToken(ownershipToken)
-                .items(routingContext.getBodyAsJsonArray())
+//                .items(routingContext.getBodyAsJsonArray()) // FIXME
                 .build();
 
-        vertx.eventBus().send(TripVerticle.UPDATE, command, asyncResult -> {
+        vertx.eventBus().send(TripVerticle.UPDATE, Json.encode(command), asyncResult -> {
             if (asyncResult.succeeded()) {
                 HttpServerResponse response = routingContext.response();
                 response.putHeader("content-type", "application/json; charset=utf-8");
