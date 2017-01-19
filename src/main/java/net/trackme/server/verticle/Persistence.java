@@ -3,10 +3,11 @@ package net.trackme.server.verticle;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.mongo.MongoClient;
 import net.trackme.server.domain.Trip;
+
+import java.util.UUID;
 
 /**
  * @author Dimitri (10/01/2017)
@@ -42,9 +43,10 @@ public class Persistence extends AbstractVerticle {
     }
 
     private void create(Message<JsonObject> message) {
-        mongo.save("trips", message.body(), asyncResult -> {
+        JsonObject tripJson = message.body().put("ownershipToken", UUID.randomUUID().toString());
+        mongo.save("trips", tripJson, asyncResult -> {
             if (asyncResult.succeeded()) {
-                message.reply(message.body().put("_id", asyncResult.result()));
+                message.reply(tripJson.put("_id", asyncResult.result()));
             }
         });
     }

@@ -10,7 +10,6 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
-import net.trackme.server.domain.Trip;
 import net.trackme.server.domain.UpdateCommand;
 
 /**
@@ -55,7 +54,9 @@ public class ServerVerticle extends AbstractVerticle {
                 HttpServerResponse response = routingContext.response();
                 if (asyncResult.result().body() != null) {
                     response.putHeader("content-type", "application/json; charset=utf-8").setStatusCode(200);
-                    response.end(Json.encodePrettily(asyncResult.result().body()));
+                    JsonObject tripJson = (JsonObject) asyncResult.result().body();
+                    tripJson.remove("ownershipToken");
+                    response.end(Json.encodePrettily(tripJson));
                 } else {
                     response.setStatusCode(404).end();
                 }
