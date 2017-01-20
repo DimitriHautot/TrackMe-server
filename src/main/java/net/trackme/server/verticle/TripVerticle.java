@@ -39,7 +39,6 @@ public class TripVerticle extends AbstractVerticle {
             if (asyncResult.succeeded()) {
                 Trip trip = Json.decodeValue(asyncResult.result().body().toString(), Trip.class);
                 if (!trip.getOwnershipToken().equals(command.getOwnershipToken())) {
-//                    message.reply(new JsonObject().put("code", 403));
                     message.reply(403);
                 }
                 apply(trip, command);
@@ -55,7 +54,6 @@ public class TripVerticle extends AbstractVerticle {
     private void persist(Trip trip, Message message) {
         JsonObject jsonTrip = new JsonObject(Json.encode(trip));
         vertx.eventBus().send(Persistence.UPDATE, jsonTrip, asyncResult -> {
-//            message.reply(new JsonObject().put("code", 204));
             message.reply(204);
         });
     }

@@ -5,12 +5,16 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
 import net.trackme.server.domain.UpdateCommand;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Verticle dedicated to the trip management.
@@ -85,10 +89,14 @@ public class ServerVerticle extends AbstractVerticle {
         String tripId = routingContext.request().getParam("tripId");
         String ownershipToken = routingContext.request().getHeader("Owner");
 
+        JsonArray body = routingContext.getBodyAsJsonArray();
+        List<JsonObject> items = new ArrayList<>(body.size());
+        body.forEach(object -> items.add((JsonObject) object));
+
         UpdateCommand command = UpdateCommand.builder()
                 .tripId(tripId)
                 .ownershipToken(ownershipToken)
-//                .items(routingContext.getBodyAsJsonArray()) // FIXME
+                .items(items)
                 .build();
 
         vertx.eventBus().send(TripVerticle.UPDATE, Json.encode(command), asyncResult -> {
