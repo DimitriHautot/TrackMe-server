@@ -1,11 +1,13 @@
 package net.trackme.server.verticle;
 
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Future;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.mongo.MongoClient;
+import net.trackme.server.domain.Status;
 import net.trackme.server.domain.Trip;
 
 import java.util.UUID;
@@ -23,7 +25,7 @@ public class Persistence extends AbstractVerticle {
     private MongoClient mongo;
 
     @Override
-    public void start() {
+    public void start(Future<Void> startFuture) {
         // FIXME Externalize this
         JsonObject configuration = new JsonObject()
                 .put("host", "localhost")
@@ -36,6 +38,8 @@ public class Persistence extends AbstractVerticle {
         eventBus.consumer(UPDATE, this::update);
         eventBus.consumer(READ, this::read);
         eventBus.consumer(DELETE, this::delete);
+
+        startFuture.complete();
     }
 
     @Override
@@ -44,7 +48,9 @@ public class Persistence extends AbstractVerticle {
     }
 
     private void create(Message<JsonObject> message) {
-        JsonObject tripJson = message.body().put("ownershipToken", UUID.randomUUID().toString());
+        JsonObject tripJson = message.body()
+                .put("ownershipToken", UUID.randomUUID().toString())
+                .put("Status", Status.CREATED);
         mongo.save("trips", tripJson, asyncResult -> {
             if (asyncResult.succeeded()) {
                 message.reply(tripJson.put("_id", asyncResult.result()));

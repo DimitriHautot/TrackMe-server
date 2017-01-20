@@ -1,6 +1,7 @@
 package net.trackme.server.verticle;
 
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Future;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerResponse;
@@ -30,8 +31,7 @@ public class ServerVerticle extends AbstractVerticle {
     }
 
     @Override
-    public void start() throws Exception {
-        super.start();
+    public void start(Future<Void> startFuture) throws Exception {
         HttpServer server = vertx.createHttpServer();
         Router router = Router.router(vertx);
         router.route("/api/trip*").handler(BodyHandler.create());
@@ -49,6 +49,8 @@ public class ServerVerticle extends AbstractVerticle {
         router.put("/api/trip/:tripId").handler(this::update);
         router.get("/api/trip/:tripId").handler(this::read);
         server.requestHandler(router::accept).listen(serverPort);
+
+        startFuture.complete();
     }
 
     private void read(RoutingContext routingContext) {
@@ -90,8 +92,17 @@ public class ServerVerticle extends AbstractVerticle {
         String ownershipToken = routingContext.request().getHeader("Owner");
 
         JsonArray body = routingContext.getBodyAsJsonArray();
-        List<JsonObject> items = new ArrayList<>(body.size());
-        body.forEach(object -> items.add((JsonObject) object));
+        List<UpdateCommand.UpdateCommandItem> items = new ArrayList<>(body.size());
+        body.forEach(object -> {
+            Object value;
+            String name = ((JsonObject) object).getString("name");
+            if ("geoLocation".equals(name)) {
+                value = ((JsonObject) object).getJsonObject("value");
+            } else {
+                value = ((JsonObject) object).getString("value");
+            }
+            items.add(new UpdateCommand.UpdateCommandItem(name, value));
+        });
 
         UpdateCommand command = UpdateCommand.builder()
                 .tripId(tripId)

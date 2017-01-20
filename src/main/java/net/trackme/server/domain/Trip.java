@@ -2,8 +2,10 @@ package net.trackme.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 
@@ -11,11 +13,15 @@ import java.util.List;
  * @author Dimitri (10/01/2017)
  */
 @Getter
+@Setter
 @Builder
 public class Trip {
 
+    @Setter(AccessLevel.NONE)
     private String _id;
+    @Setter(AccessLevel.NONE)
     private String ownershipToken;
+
     private String description; // e.g. Trip to Bordeaux
     private Status status; // Paused
     private String statusRemark; // Pee

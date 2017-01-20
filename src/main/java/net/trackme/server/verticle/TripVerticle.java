@@ -1,12 +1,18 @@
 package net.trackme.server.verticle;
 
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Future;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
+import net.trackme.server.domain.GeoLocation;
+import net.trackme.server.domain.Status;
 import net.trackme.server.domain.Trip;
 import net.trackme.server.domain.UpdateCommand;
+
+import java.util.ArrayList;
+import java.util.Map;
 
 /**
  * Verticle responsible to hold business logic related to {@link net.trackme.server.domain.Trip} instances.
@@ -18,11 +24,11 @@ public class TripVerticle extends AbstractVerticle {
     public static final String UPDATE = "business.trip.update";
 
     @Override
-    public void start() throws Exception {
-        super.start();
-
+    public void start(Future<Void> startFuture) throws Exception {
         EventBus eventBus = vertx.eventBus();
         eventBus.consumer(UPDATE, this::update);
+
+        startFuture.complete();
     }
 
     /**
@@ -48,7 +54,32 @@ public class TripVerticle extends AbstractVerticle {
     }
 
     private void apply(Trip trip, UpdateCommand updateCommand) {
-        // TODO Apply each item on the trip here
+        updateCommand.getItems().forEach(item -> {
+            switch (item.getName()) {
+                case "description":
+                    trip.setDescription(item.getValue() != null ? item.getValue().toString() : null);
+                    break;
+                case "status":
+                    for (Status status : Status.values()) {
+                        if (status.name().equals(item.getValue())) {
+                            trip.setStatus(status);
+                            break;
+                        }
+                    }
+                    break;
+                case "statusRemark":
+                    trip.setStatusRemark(item.getValue() != null ? item.getValue().toString() : null);
+                    break;
+                case "geoLocation":
+                    if (item.getValue() != null) {
+                        if (trip.getGeoLocations() == null) {
+                            trip.setGeoLocations(new ArrayList<>());
+                        }
+                        trip.getGeoLocations().add(new GeoLocation((Map<String, Object>) item.getValue()));
+                    }
+                    break;
+            }
+        });
     }
 
     private void persist(Trip trip, Message message) {
