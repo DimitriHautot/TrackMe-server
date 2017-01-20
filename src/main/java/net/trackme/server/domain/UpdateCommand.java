@@ -21,7 +21,8 @@ public class UpdateCommand {
     @JsonCreator
     public UpdateCommand(@JsonProperty(value = "ownershipToken") String ownershipToken,
                          @JsonProperty(value = "tripId") String tripId,
-                         @JsonProperty(value = "items") UpdateCommandItem[] items) {
+                         @JsonProperty(value = "items") UpdateCommandItem[] items)
+    {
         this.ownershipToken = ownershipToken;
         this.tripId = tripId;
         this.items = items;

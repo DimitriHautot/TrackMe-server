@@ -1,5 +1,7 @@
 package net.trackme.server.domain;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -19,7 +21,14 @@ public class Trip {
     private String statusRemark; // Pee
     private List<GeoLocation> geoLocations;
 
-    public Trip(String _id, String ownershipToken, String description, Status status, String statusRemark, List<GeoLocation> geoLocations) {
+    @JsonCreator
+    public Trip(@JsonProperty(value = "_id") String _id,
+                @JsonProperty(value = "ownershipToken") String ownershipToken,
+                @JsonProperty(value = "description") String description,
+                @JsonProperty(value = "status") Status status,
+                @JsonProperty(value = "statusRemark") String statusRemark,
+                @JsonProperty(value = "geoLocations") List<GeoLocation> geoLocations)
+    {
         this._id = _id;
         this.ownershipToken = ownershipToken;
         this.description = description;
