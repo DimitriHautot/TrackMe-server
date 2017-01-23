@@ -13,8 +13,10 @@ import net.trackme.server.service.persistence.mongo.PersistenceServiceMongoImpl;
  * @author Dimitri (22/01/2017)
  */
 @ProxyGen
-@VertxGen
+//@VertxGen
 public interface PersistenceService {
+
+    String NAME = "persistence.service.name";
 
     static PersistenceService create(Vertx vertx) {
         return new PersistenceServiceMongoImpl(vertx);
@@ -24,7 +26,7 @@ public interface PersistenceService {
         return new PersistenceServiceVertxEBProxy(vertx, address);
     }
 
-    void create(JsonObject trip, Handler<AsyncResult<String>> resultHandler);
+    void createTrip(JsonObject trip, Handler<AsyncResult<JsonObject>> resultHandler);
     void read(String tripId, Handler<AsyncResult<JsonObject>> resultHandler);
     void update(JsonObject trip, Handler<AsyncResult<String>> resultHandler);
     void delete(String tripId, Handler<AsyncResult<Void>> resultHandler);

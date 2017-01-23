@@ -24,7 +24,7 @@ public class ServerApplication {
 	@PostConstruct
     public void deployVerticles() {
 	    final Vertx vertx = Vertx.vertx();
-	    vertx.deployVerticle(new Persistence());
+//	    vertx.deployVerticle(new Persistence());
 	    vertx.deployVerticle(new TripVerticle(), new DeploymentOptions().setWorker(true));
 	    vertx.deployVerticle(new ServerVerticle(serverPort));
     }
