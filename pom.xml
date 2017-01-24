@@ -82,6 +82,7 @@
                 <configuration>
                     <annotationProcessors>
                         <annotationProcessor>io.vertx.codegen.CodeGenProcessor</annotationProcessor>
+                        <annotationProcessor>lombok.launch.AnnotationProcessorHider$AnnotationProcessor</annotationProcessor>
                     </annotationProcessors>
                     <compilerArgs>
                         <arg>-AoutputDirectory=${project.basedir}/src/main</arg>

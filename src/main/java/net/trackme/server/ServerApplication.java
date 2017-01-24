@@ -1,10 +1,7 @@
 package net.trackme.server;
 
-import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
-import net.trackme.server.verticle.Persistence;
 import net.trackme.server.verticle.ServerVerticle;
-import net.trackme.server.verticle.TripVerticle;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -24,8 +21,6 @@ public class ServerApplication {
 	@PostConstruct
     public void deployVerticles() {
 	    final Vertx vertx = Vertx.vertx();
-//	    vertx.deployVerticle(new Persistence());
-	    vertx.deployVerticle(new TripVerticle(), new DeploymentOptions().setWorker(true));
 	    vertx.deployVerticle(new ServerVerticle(serverPort));
     }
 }

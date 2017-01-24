@@ -2,11 +2,10 @@ package net.trackme.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.vertx.core.json.JsonObject;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.Map;
 
 /**
  * @author Dimitri (12/01/2017)
@@ -32,10 +31,10 @@ public class GeoLocation {
         this.comment = comment;
     }
 
-    public GeoLocation(Map<String, Object> map) {
-        this.timestamp = (int) map.get("timestamp");
-        this.latitude = (double) map.get("latitude");
-        this.longitude = (double) map.get("longitude");
-        this.comment = (String) map.get("comment");
+    public GeoLocation(JsonObject jsonObject) {
+        this.timestamp = jsonObject.getLong("timestamp");
+        this.latitude = jsonObject.getDouble("latitude");
+        this.longitude = jsonObject.getDouble("longitude");
+        this.comment = jsonObject.getString("comment");
     }
 }

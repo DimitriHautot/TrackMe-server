@@ -2,7 +2,6 @@ package net.trackme.server.service.persistence;
 
 import io.vertx.codegen.annotations.ProxyClose;
 import io.vertx.codegen.annotations.ProxyGen;
-import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -13,10 +12,9 @@ import net.trackme.server.service.persistence.mongo.PersistenceServiceMongoImpl;
  * @author Dimitri (22/01/2017)
  */
 @ProxyGen
-//@VertxGen
 public interface PersistenceService {
 
-    String NAME = "persistence.service.name";
+    String NAME = "service.persistence";
 
     static PersistenceService create(Vertx vertx) {
         return new PersistenceServiceMongoImpl(vertx);
