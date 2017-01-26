@@ -42,7 +42,7 @@ public class ServerVerticle extends AbstractVerticle {
         router.route().handler(CorsHandler.create("*")
                 .allowedMethod(HttpMethod.GET)
                 .allowedMethod(HttpMethod.POST)
-                .allowedMethod(HttpMethod.PUT)
+                .allowedMethod(HttpMethod.PATCH)
                 .allowedMethod(HttpMethod.OPTIONS)
                 .allowedHeader("Access-Control-Allow-Method")
                 .allowedHeader("Access-Control-Allow-Headers")
@@ -50,7 +50,7 @@ public class ServerVerticle extends AbstractVerticle {
                 .allowedHeader("Content-Type")
         );
         router.post("/api/trip").handler(this::create);
-        router.put("/api/trip/:tripId").handler(this::update);
+        router.patch("/api/trip/:tripId").handler(this::update);
         router.get("/api/trip/:tripId").handler(this::read);
         server.requestHandler(router::accept).listen(serverPort);
 
