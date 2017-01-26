@@ -4,6 +4,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -43,19 +44,30 @@ public class TripServiceImpl implements TripService {
      */
     @Override
     public void update(String tripId, String ownershipToken, JsonArray updateItemsJA, Handler<AsyncResult<Integer>> resultHandler) {
-
-        persistenceService.read(tripId, response -> {
-            if (response.succeeded()) {
-                Trip trip = Json.decodeValue(response.result().toString(), Trip.class);
+        persistenceService.read(tripId, readResponse -> {
+            if (readResponse.succeeded()) {
+                Trip trip = Json.decodeValue(readResponse.result().toString(), Trip.class);
                 if (!trip.getOwnershipToken().equals(ownershipToken)) {
                     resultHandler.handle(Future.succeededFuture(403));
                 }
                 apply(trip, updateItemsJA);
 
-                persistenceService.update(new JsonObject(Json.encode(trip)), response2 -> {
+                JsonObject jsonTrip = new JsonObject(Json.encode(trip));
+                persistenceService.update(jsonTrip, updateResponse -> {
                     resultHandler.handle(Future.succeededFuture(204));
+
+                    jsonTrip.remove("ownershipToken");
+//                    vertx.eventBus().publish("event.trip.update", jsonTrip, new DeliveryOptions().addHeader("tripId", tripId));
+                    vertx.eventBus().publish("test", jsonTrip, new DeliveryOptions().addHeader("tripId", tripId));
                 });
             }
+        });
+    }
+
+    @Override
+    public void exist(String tripId, Handler<AsyncResult<Boolean>> resultHandler) {
+        persistenceService.read(tripId, response -> {
+            resultHandler.handle(Future.succeededFuture(response.succeeded()));
         });
     }
 

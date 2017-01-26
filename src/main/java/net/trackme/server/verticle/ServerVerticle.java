@@ -11,7 +11,11 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
+import io.vertx.ext.web.handler.sockjs.BridgeOptions;
+import io.vertx.ext.web.handler.sockjs.PermittedOptions;
+import io.vertx.ext.web.handler.sockjs.SockJSHandler;
 import io.vertx.serviceproxy.ProxyHelper;
+import lombok.extern.slf4j.Slf4j;
 import net.trackme.server.service.persistence.PersistenceService;
 import net.trackme.server.service.persistence.mongo.PersistenceServiceMongoImpl;
 import net.trackme.server.service.trip.TripService;
@@ -22,11 +26,13 @@ import net.trackme.server.service.trip.impl.TripServiceImpl;
  *
  * @author Dimitri (09/01/2017)
  */
+@Slf4j
 public class ServerVerticle extends AbstractVerticle {
 
     private int serverPort;
     private TripService tripService;
     private PersistenceService persistenceService;
+    private BridgeEventHandler bridgeEventHandler;
     private MessageConsumer<JsonObject> persistenceMessageConsumer;
     private MessageConsumer<JsonObject> tripMessageConsumer;
 
@@ -36,6 +42,16 @@ public class ServerVerticle extends AbstractVerticle {
 
     @Override
     public void start(Future<Void> startFuture) throws Exception {
+        // Services instances & proxies
+        final PersistenceServiceMongoImpl persistenceServiceMongo = new PersistenceServiceMongoImpl(vertx);
+        persistenceMessageConsumer = ProxyHelper.registerService(PersistenceService.class, vertx, persistenceServiceMongo, PersistenceService.NAME);
+        final TripServiceImpl tripServiceImpl = new TripServiceImpl(vertx);
+        tripMessageConsumer = ProxyHelper.registerService(TripService.class, vertx, tripServiceImpl, TripService.NAME);
+
+        persistenceService = ProxyHelper.createProxy(PersistenceService.class, vertx, PersistenceService.NAME);
+        tripService = ProxyHelper.createProxy(TripService.class, vertx, TripService.NAME);
+
+        // HTTP server
         HttpServer server = vertx.createHttpServer();
         Router router = Router.router(vertx);
         router.route("/api/trip*").handler(BodyHandler.create());
@@ -52,21 +68,30 @@ public class ServerVerticle extends AbstractVerticle {
         router.post("/api/trip").handler(this::create);
         router.patch("/api/trip/:tripId").handler(this::update);
         router.get("/api/trip/:tripId").handler(this::read);
+
+        // SockJS transport
+        SockJSHandler sockJSHandler = SockJSHandler.create(vertx);
+        PermittedOptions outboundPermitted = new PermittedOptions().setAddressRegex("event\\.trip\\.update\\..+");
+        BridgeOptions bridgeOptions = new BridgeOptions().addOutboundPermitted(outboundPermitted);
+        bridgeEventHandler = new BridgeEventHandler(vertx);
+        sockJSHandler.bridge(bridgeOptions, bridgeEventHandler);
+        router.route("/eventbus/*").handler(sockJSHandler);
+
+        vertx.eventBus().consumer("test", message -> {
+            log.info("/ ... {}", message);
+        });
+        vertx.eventBus().consumer("event.trip.update.*", message -> {
+            log.info("// ... {}", message);
+        });
+
         server.requestHandler(router::accept).listen(serverPort);
-
-        final PersistenceServiceMongoImpl persistenceServiceMongo = new PersistenceServiceMongoImpl(vertx);
-        persistenceMessageConsumer = ProxyHelper.registerService(PersistenceService.class, vertx, persistenceServiceMongo, PersistenceService.NAME);
-        final TripServiceImpl tripServiceImpl = new TripServiceImpl(vertx);
-        tripMessageConsumer = ProxyHelper.registerService(TripService.class, vertx, tripServiceImpl, TripService.NAME);
-
-        persistenceService = ProxyHelper.createProxy(PersistenceService.class, vertx, PersistenceService.NAME);
-        tripService = ProxyHelper.createProxy(TripService.class, vertx, TripService.NAME);
-
         startFuture.complete();
     }
 
     @Override
     public void stop(Future<Void> stopFuture) {
+        bridgeEventHandler.stop();
+        bridgeEventHandler = null;
         tripService = null;
         persistenceService = null;
         ProxyHelper.unregisterService(tripMessageConsumer);

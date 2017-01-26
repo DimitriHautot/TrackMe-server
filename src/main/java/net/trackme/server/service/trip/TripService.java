@@ -25,6 +25,7 @@ public interface TripService {
     }
 
     void update(String tripId, String ownershipToken, JsonArray updateItemsJA, Handler<AsyncResult<Integer>> resultHandler);
+    void exist(String tripId, Handler<AsyncResult<Boolean>> resultHandler);
 
     @ProxyClose
     void destroy();
